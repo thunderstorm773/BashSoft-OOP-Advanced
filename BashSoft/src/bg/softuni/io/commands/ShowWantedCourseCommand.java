@@ -1,43 +1,37 @@
 package bg.softuni.io.commands;
 
-import bg.softuni.contracts.io.DirectoryManager;
-import bg.softuni.contracts.judge.ContentComparer;
-import bg.softuni.contracts.network.AsyncDownloader;
+import bg.softuni.annotations.Alias;
+import bg.softuni.annotations.Inject;
 import bg.softuni.contracts.repository.Database;
 
+@Alias(value = "show")
 public class ShowWantedCourseCommand extends Command{
 
-    public ShowWantedCourseCommand(
-            String input,
-            String[] data,
-            Database studentRepository,
-            ContentComparer tester,
-            DirectoryManager ioManager,
-            AsyncDownloader downloadManager) {
+    @Inject
+    private Database repository;
 
-        super(input, data, studentRepository, tester, ioManager, downloadManager);
+    public ShowWantedCourseCommand(String input, String[] data) {
+        super(input, data);
     }
 
     @Override
     public void execute() throws Exception {
         if (this.getData().length != 2 && this.getData().length != 3) {
             DisplayInvalidCommandMessage invalidCommandMessage =
-                    new DisplayInvalidCommandMessage(
-                            this.getInput(), this.getData(), this.getStudentRepository(),
-                            this.getTester(), this.getIoManager(), this.getDownloadManager());
+                    new DisplayInvalidCommandMessage(this.getInput(), this.getData());
             invalidCommandMessage.execute();
             return;
         }
 
         if (this.getData().length == 2) {
             String courseName = this.getData()[1];
-            this.getStudentRepository().getStudentsByCourse(courseName);
+            this.repository.getStudentsByCourse(courseName);
         }
 
         if (this.getData().length == 3) {
             String courseName = this.getData()[1];
             String userName = this.getData()[2];
-            this.getStudentRepository().getStudentMarkInCourse(courseName, userName);
+            this.repository.getStudentMarkInCourse(courseName, userName);
         }
     }
 }

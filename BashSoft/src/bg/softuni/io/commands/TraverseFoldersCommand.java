@@ -1,40 +1,34 @@
 package bg.softuni.io.commands;
 
+import bg.softuni.annotations.Alias;
+import bg.softuni.annotations.Inject;
 import bg.softuni.contracts.io.DirectoryManager;
-import bg.softuni.contracts.judge.ContentComparer;
-import bg.softuni.contracts.network.AsyncDownloader;
-import bg.softuni.contracts.repository.Database;
 
+@Alias(value = "ls")
 public class TraverseFoldersCommand extends Command{
 
-    public TraverseFoldersCommand(
-            String input,
-            String[] data,
-            Database studentRepository,
-            ContentComparer tester,
-            DirectoryManager ioManager,
-            AsyncDownloader downloadManager) {
+    @Inject
+    private DirectoryManager ioManager;
 
-        super(input, data, studentRepository, tester, ioManager, downloadManager);
+    public TraverseFoldersCommand(String input, String[] data) {
+        super(input, data);
     }
 
     @Override
     public void execute() throws Exception {
         if (this.getData().length != 1 && this.getData().length != 2) {
             DisplayInvalidCommandMessage invalidCommandMessage =
-                    new DisplayInvalidCommandMessage(
-                            this.getInput(), this.getData(), this.getStudentRepository(),
-                            this.getTester(), this.getIoManager(), this.getDownloadManager());
+                    new DisplayInvalidCommandMessage(this.getInput(), this.getData());
             invalidCommandMessage.execute();
             return;
         }
 
         if (this.getData().length == 1) {
-            this.getIoManager().traverseDirectory(0);
+            this.ioManager.traverseDirectory(0);
         }
 
         if (this.getData().length == 2) {
-            this.getIoManager().traverseDirectory(Integer.valueOf(this.getData()[1]));
+            this.ioManager.traverseDirectory(Integer.valueOf(this.getData()[1]));
         }
     }
 }

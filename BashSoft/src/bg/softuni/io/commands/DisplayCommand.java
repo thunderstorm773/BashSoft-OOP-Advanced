@@ -1,29 +1,24 @@
 package bg.softuni.io.commands;
 
-import bg.softuni.contracts.io.DirectoryManager;
-import bg.softuni.contracts.judge.ContentComparer;
+import bg.softuni.annotations.Alias;
+import bg.softuni.annotations.Inject;
 import bg.softuni.contracts.models.Course;
 import bg.softuni.contracts.models.Student;
-import bg.softuni.contracts.network.AsyncDownloader;
 import bg.softuni.contracts.repository.Database;
 import bg.softuni.dataStructures.SimpleSortedList;
 import bg.softuni.exceptions.InvalidInputException;
 import bg.softuni.io.OutputWriter;
-
 import javax.naming.InvalidNameException;
 import java.util.Comparator;
 
+@Alias(value = "display")
 public class DisplayCommand extends Command {
 
-    public DisplayCommand(
-            String input,
-            String[] data,
-            Database studentRepository,
-            ContentComparer tester,
-            DirectoryManager ioManager,
-            AsyncDownloader downloadManager) {
+    @Inject
+    private Database repository;
 
-        super(input, data, studentRepository, tester, ioManager, downloadManager);
+    public DisplayCommand(String input, String[] data) {
+        super(input, data);
     }
 
     @Override
@@ -39,13 +34,13 @@ public class DisplayCommand extends Command {
         if (entityToDisplay.equalsIgnoreCase("students")) {
             Comparator<Student> studentComparator = this.createComparator(Student.class, sortType);
             SimpleSortedList<Student> list =
-                    this.getStudentRepository().getAllStudentsSorted(studentComparator);
+                    this.repository.getAllStudentsSorted(studentComparator);
             OutputWriter.writeMessageOnNewLine(list.joinWith(System.lineSeparator()));
 
         } else if (entityToDisplay.equalsIgnoreCase("courses")) {
             Comparator<Course> courseComparator = this.createComparator(Course.class, sortType);
             SimpleSortedList<Course> list =
-                    this.getStudentRepository().getAllCoursesSorted(courseComparator);
+                    this.repository.getAllCoursesSorted(courseComparator);
             OutputWriter.writeMessageOnNewLine(list.joinWith(System.lineSeparator()));
 
         } else {

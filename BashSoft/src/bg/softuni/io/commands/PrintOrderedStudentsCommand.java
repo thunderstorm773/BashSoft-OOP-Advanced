@@ -1,23 +1,19 @@
 package bg.softuni.io.commands;
 
-import bg.softuni.contracts.io.DirectoryManager;
-import bg.softuni.contracts.judge.ContentComparer;
-import bg.softuni.contracts.network.AsyncDownloader;
+import bg.softuni.annotations.Alias;
+import bg.softuni.annotations.Inject;
 import bg.softuni.contracts.repository.Database;
 import bg.softuni.io.OutputWriter;
 import bg.softuni.staticData.ExceptionMessages;
 
+@Alias(value = "order")
 public class PrintOrderedStudentsCommand extends Command{
 
-    public PrintOrderedStudentsCommand(
-            String input,
-            String[] data,
-            Database studentRepository,
-            ContentComparer tester,
-            DirectoryManager ioManager,
-            AsyncDownloader downloadManager) {
+    @Inject
+    private Database repository;
 
-        super(input, data, studentRepository, tester, ioManager, downloadManager);
+    public PrintOrderedStudentsCommand(String input, String[] data) {
+        super(input, data);
     }
 
     private void tryParseParametersForOrder(
@@ -29,13 +25,13 @@ public class PrintOrderedStudentsCommand extends Command{
         }
 
         if (takeQuantity.equals("all")) {
-            this.getStudentRepository().orderAndTake(courseName, orderType);
+            this.repository.orderAndTake(courseName, orderType);
             return;
         }
 
         try {
             int studentsToTake = Integer.parseInt(takeQuantity);
-            this.getStudentRepository().orderAndTake(courseName, orderType, studentsToTake);
+            this.repository.orderAndTake(courseName, orderType, studentsToTake);
         } catch (NumberFormatException nfe) {
             OutputWriter.displayException(ExceptionMessages.IVALID_TAKE_QUANTITY_PARAMETER);
         }
@@ -45,9 +41,7 @@ public class PrintOrderedStudentsCommand extends Command{
     public void execute() throws Exception {
         if (this.getData().length != 5) {
             DisplayInvalidCommandMessage invalidCommandMessage =
-                    new DisplayInvalidCommandMessage(
-                            this.getInput(), this.getData(), this.getStudentRepository(),
-                            this.getTester(), this.getIoManager(), this.getDownloadManager());
+                    new DisplayInvalidCommandMessage(this.getInput(), this.getData());
             invalidCommandMessage.execute();
             return;
         }

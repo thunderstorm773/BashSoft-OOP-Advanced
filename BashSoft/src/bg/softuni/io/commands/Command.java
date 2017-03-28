@@ -9,27 +9,13 @@ import sun.plugin.dom.exception.InvalidStateException;
 
 public abstract class Command implements Executable{
 
-    private Database studentRepository;
-    private ContentComparer tester;
-    private DirectoryManager ioManager;
-    private AsyncDownloader downloadManager;
     private String input;
     private String[] data;
 
-    protected Command(
-            String input,
-            String[] data,
-            Database studentRepository,
-            ContentComparer tester,
-            DirectoryManager ioManager,
-            AsyncDownloader downloadManager) {
+    protected Command(String input, String[] data) {
 
         this.setInput(input);
         this.setData(data);
-        this.setStudentRepository(studentRepository);
-        this.setTester(tester);
-        this.setIoManager(ioManager);
-        this.setDownloadManager(downloadManager);
     }
 
     public String getInput() {
@@ -52,39 +38,6 @@ public abstract class Command implements Executable{
             throw new InvalidStateException("Invalid input");
         }
         this.data = data;
-    }
-
-    public Database getStudentRepository() {
-        return this.studentRepository;
-    }
-
-    private void setStudentRepository(Database studentRepository) {
-        this.studentRepository = studentRepository;
-    }
-
-
-    public ContentComparer getTester() {
-        return this.tester;
-    }
-
-    private void setTester(ContentComparer tester) {
-        this.tester = tester;
-    }
-
-    protected DirectoryManager getIoManager() {
-        return this.ioManager;
-    }
-
-    private void setIoManager(DirectoryManager ioManager) {
-        this.ioManager = ioManager;
-    }
-
-    public AsyncDownloader getDownloadManager() {
-        return this.downloadManager;
-    }
-
-    private void setDownloadManager(AsyncDownloader downloadManager) {
-        this.downloadManager = downloadManager;
     }
 
     public abstract void execute() throws Exception;

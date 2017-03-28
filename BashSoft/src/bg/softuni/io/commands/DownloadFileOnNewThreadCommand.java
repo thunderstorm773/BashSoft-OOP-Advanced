@@ -1,35 +1,29 @@
 package bg.softuni.io.commands;
 
-import bg.softuni.contracts.io.DirectoryManager;
-import bg.softuni.contracts.judge.ContentComparer;
+import bg.softuni.annotations.Alias;
+import bg.softuni.annotations.Inject;
 import bg.softuni.contracts.network.AsyncDownloader;
-import bg.softuni.contracts.repository.Database;
 
+@Alias(value = "downloadasync")
 public class DownloadFileOnNewThreadCommand extends Command{
 
-    public DownloadFileOnNewThreadCommand(
-            String input,
-            String[] data,
-            Database studentRepository,
-            ContentComparer tester,
-            DirectoryManager ioManager,
-            AsyncDownloader downloadManager) {
+    @Inject
+    private AsyncDownloader downloadManager;
 
-        super(input, data, studentRepository, tester, ioManager, downloadManager);
+    public DownloadFileOnNewThreadCommand(String input, String[] data) {
+        super(input, data);
     }
 
     @Override
     public void execute() throws Exception {
         if (this.getData().length != 2) {
             DisplayInvalidCommandMessage invalidCommandMessage =
-                    new DisplayInvalidCommandMessage(
-                            this.getInput(), this.getData(), this.getStudentRepository(),
-                            this.getTester(), this.getIoManager(), this.getDownloadManager());
+                    new DisplayInvalidCommandMessage(this.getInput(), this.getData());
             invalidCommandMessage.execute();
             return;
         }
 
         String fileUrl = this.getData()[1];
-        this.getDownloadManager().downloadOnNewThread(fileUrl);
+        this.downloadManager.downloadOnNewThread(fileUrl);
     }
 }

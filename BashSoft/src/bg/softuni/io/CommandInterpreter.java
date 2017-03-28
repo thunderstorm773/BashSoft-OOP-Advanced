@@ -1,16 +1,23 @@
 package bg.softuni.io;
 
+import bg.softuni.annotations.Alias;
+import bg.softuni.annotations.Inject;
 import bg.softuni.contracts.Executable;
 import bg.softuni.contracts.io.DirectoryManager;
 import bg.softuni.contracts.io.Interpreter;
 import bg.softuni.contracts.judge.ContentComparer;
 import bg.softuni.contracts.network.AsyncDownloader;
 import bg.softuni.contracts.repository.Database;
-import bg.softuni.io.commands.*;
 
+import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 
 public class CommandInterpreter implements Interpreter {
+
+    private static final String COMMANDS_LOCATION = "src/bg/softuni/io/commands";
+    private static final String COMMANDS_PACKAGE = "bg.softuni.io.commands.";
 
     private ContentComparer tester;
     private Database repository;
@@ -58,131 +65,61 @@ public class CommandInterpreter implements Interpreter {
     }
 
     public Executable parseCommand(String input, String[] data, String commandName) throws IOException {
-        switch (commandName) {
-            case "open":
-               return new OpenFileCommand(
-                        input,
-                        data,
-                        this.getRepository(),
-                        this.getTester(),
-                        this.getIoManager(),
-                        this.getDownloadManager());
-            case "mkdir":
-               return new MakeDirectoryCommand(
-                        input,
-                        data,
-                        this.getRepository(),
-                        this.getTester(),
-                        this.getIoManager(),
-                        this.getDownloadManager());
-            case "ls":
-                return new TraverseFoldersCommand(
-                        input,
-                        data,
-                        this.getRepository(),
-                        this.getTester(),
-                        this.getIoManager(),
-                        this.getDownloadManager());
-            case "cmp":
-                return new CompareFilesCommand(
-                        input,
-                        data,
-                        this.getRepository(),
-                        this.getTester(),
-                        this.getIoManager(),
-                        this.getDownloadManager());
-            case "cdrel":
-                return new ChangeRelativePathCommand(
-                        input,
-                        data,
-                        this.getRepository(),
-                        this.getTester(),
-                        this.getIoManager(),
-                        this.getDownloadManager());
-            case "cdabs":
-                return new ChangeAbsolutePathCommand(
-                        input,
-                        data,
-                        this.getRepository(),
-                        this.getTester(),
-                        this.getIoManager(),
-                        this.getDownloadManager());
-            case "readdb":
-                return new ReadDatabaseFromFileCommand(
-                        input,
-                        data,
-                        this.getRepository(),
-                        this.getTester(),
-                        this.getIoManager(),
-                        this.getDownloadManager());
-            case "help":
-                return new GetHelpCommand(
-                        input,
-                        data,
-                        this.getRepository(),
-                        this.getTester(),
-                        this.getIoManager(),
-                        this.getDownloadManager());
-            case "show":
-                return new ShowWantedCourseCommand(
-                        input,
-                        data,
-                        this.getRepository(),
-                        this.getTester(),
-                        this.getIoManager(),
-                        this.getDownloadManager());
-            case "filter":
-                return new PrintFilteredStudentsCommand(
-                        input,
-                        data,
-                        this.getRepository(),
-                        this.getTester(),
-                        this.getIoManager(),
-                        this.getDownloadManager());
-            case "order":
-                return new PrintOrderedStudentsCommand(
-                        input,
-                        data,
-                        this.getRepository(),
-                        this.getTester(),
-                        this.getIoManager(),
-                        this.getDownloadManager());
-            case "download":
-                return new DownloadFileCommand(
-                        input,
-                        data,
-                        this.getRepository(),
-                        this.getTester(),
-                        this.getIoManager(),
-                        this.getDownloadManager());
-            case "downloadasync":
-                return new DownloadFileOnNewThreadCommand(
-                        input,
-                        data,
-                        this.getRepository(),
-                        this.getTester(),
-                        this.getIoManager(),
-                        this.getDownloadManager());
-            case "dropdb":
-                return new DropDatabaseCommand(
-                        input,
-                        data,
-                        this.getRepository(),
-                        this.getTester(),
-                        this.getIoManager(),
-                        this.getDownloadManager());
-            case "display":
-                return new DisplayCommand(
-                        input,
-                        data,
-                        this.getRepository(),
-                        this.getTester(),
-                        this.getIoManager(),
-                        this.getDownloadManager());
-            default:
-                return new DisplayInvalidCommandMessage(
-                            input, data, this.getRepository(),
-                            this.getTester(), this.getIoManager(), this.getDownloadManager());
+        File commandsFolder = new File(COMMANDS_LOCATION);
+        Executable executable = null;
+
+        for (File file : commandsFolder.listFiles()) {
+            if (!file.isFile() || !file.getName().endsWith(".java")) {
+                continue;
+            }
+
+            try {
+                String className = file.getName()
+                        .substring(0, file.getName().lastIndexOf('.'));
+                Class<Executable> exeClass = (Class<Executable>)
+                        Class.forName(COMMANDS_PACKAGE + className);
+
+                if (!exeClass.isAnnotationPresent(Alias.class)) {
+                    continue;
+                }
+
+                Alias alias = exeClass.getAnnotation(Alias.class);
+                String value = alias.value();
+                if (!value.equalsIgnoreCase(commandName)) {
+                    continue;
+                }
+
+                Constructor exeCtor = exeClass.getConstructor(String.class, String[].class);
+                executable = (Executable) exeCtor.newInstance(input, data);
+                this.injectDependencies(executable, exeClass);
+
+            }catch (ReflectiveOperationException rfe) {
+                rfe.printStackTrace();
+            }
+        }
+
+        return executable;
+    }
+
+    private void injectDependencies(Executable executable, Class<Executable> exeClass)
+        throws ReflectiveOperationException{
+
+        Field[] exeFields = exeClass.getDeclaredFields();
+        for (Field fieldToSet : exeFields) {
+            if (!fieldToSet.isAnnotationPresent(Inject.class)) {
+                continue;
+            }
+
+            fieldToSet.setAccessible(true);
+            Field[] theseFields = CommandInterpreter.class.getDeclaredFields();
+            for (Field thisField : theseFields) {
+                if (!thisField.getType().equals(fieldToSet.getType())) {
+                    continue;
+                }
+
+                thisField.setAccessible(true);
+                fieldToSet.set(executable, thisField.get(this));
+            }
         }
     }
 
