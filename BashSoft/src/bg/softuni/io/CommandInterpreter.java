@@ -8,6 +8,7 @@ import bg.softuni.contracts.io.Interpreter;
 import bg.softuni.contracts.judge.ContentComparer;
 import bg.softuni.contracts.network.AsyncDownloader;
 import bg.softuni.contracts.repository.Database;
+import bg.softuni.io.commands.DisplayInvalidCommandMessage;
 
 import java.io.File;
 import java.io.IOException;
@@ -67,6 +68,7 @@ public class CommandInterpreter implements Interpreter {
     public Executable parseCommand(String input, String[] data, String commandName) throws IOException {
         File commandsFolder = new File(COMMANDS_LOCATION);
         Executable executable = null;
+        boolean isCommandExist = false;
 
         for (File file : commandsFolder.listFiles()) {
             if (!file.isFile() || !file.getName().endsWith(".java")) {
@@ -89,6 +91,7 @@ public class CommandInterpreter implements Interpreter {
                     continue;
                 }
 
+                isCommandExist = true;
                 Constructor exeCtor = exeClass.getConstructor(String.class, String[].class);
                 executable = (Executable) exeCtor.newInstance(input, data);
                 this.injectDependencies(executable, exeClass);
@@ -96,6 +99,10 @@ public class CommandInterpreter implements Interpreter {
             }catch (ReflectiveOperationException rfe) {
                 rfe.printStackTrace();
             }
+        }
+
+        if (!isCommandExist) {
+            executable = new DisplayInvalidCommandMessage(input, data);
         }
 
         return executable;
