@@ -1,9 +1,9 @@
 package models;
 
-import bg.softuni.contracts.models.Course;
-import bg.softuni.contracts.models.Student;
-import bg.softuni.io.OutputWriter;
-import bg.softuni.staticData.ExceptionMessages;
+import main.bg.softuni.contracts.models.Course;
+import main.bg.softuni.contracts.models.Student;
+import main.bg.softuni.io.OutputWriter;
+import main.bg.softuni.staticData.ExceptionMessages;
 
 import java.util.Arrays;
 import java.util.Collections;
